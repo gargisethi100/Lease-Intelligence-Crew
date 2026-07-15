@@ -26,6 +26,9 @@ langchain-tavily                     # TavilySearch (Market Researcher)
 langsmith                            # tracing client
 python-dotenv                        # load .env into the environment
 truststore                           # use OS cert store (TLS-inspecting proxies)
+
+# --- Demo UI ---
+streamlit                            # web front-end (app.py)
 pydantic>=2                          # v2 schemas for structured output
 
 # --- MCP server + client (Phase 6) ---
