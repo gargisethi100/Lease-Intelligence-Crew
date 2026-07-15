@@ -40,3 +40,5 @@ data/leases/*.pdf
 .DS_Store
 Thumbs.db
 .idea/
+LEARNING_NOTES.md
+INTERVIEW_QA.md
