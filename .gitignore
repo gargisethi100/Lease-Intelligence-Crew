@@ -1,0 +1,42 @@
+# ============================================================
+# Lease Intelligence Crew — .gitignore
+# Rule of thumb: never commit secrets, virtual environments, or
+# generated artifacts. Only source code, docs, and small config
+# belong in version control.
+# ============================================================
+
+# --- Secrets & local config ---------------------------------
+# Real API keys live in .env and must NEVER be committed.
+# The safe placeholder file .env.example IS committed (note the "!").
+.env
+.env.*
+!.env.example
+
+# --- Python virtual environment -----------------------------
+.venv/
+venv/
+
+# --- Python bytecode & test caches --------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Generated data artifacts (rebuildable, not source) -----
+# Persisted vector store, rebuilt by re-running ingestion:
+chroma_db/
+# LangGraph SQLite checkpointer (stored conversation memory):
+*.sqlite
+*.sqlite3
+# LangGraph dev-server cache:
+.langgraph_api/
+
+# --- Sample lease PDFs (large / licensing; fetched locally) -
+# See README for where to download them.
+data/leases/*.pdf
+
+# --- OS / editor noise --------------------------------------
+.DS_Store
+Thumbs.db
+.idea/

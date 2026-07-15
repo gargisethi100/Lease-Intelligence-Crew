@@ -1,0 +1,35 @@
+# ============================================================
+# Lease Intelligence Crew — Python dependencies (Python 3.13)
+# Install:  .venv\Scripts\python -m pip install -r requirements.txt
+# Targets the LangChain 1.x / LangGraph 1.x line (2026 idioms).
+# ============================================================
+
+# --- Agent runtime: graph, state, checkpointers ---
+langgraph>=1
+langgraph-checkpoint-sqlite          # SqliteSaver for cross-restart memory
+
+# --- LangChain + provider integrations ---
+langchain>=1                         # create_agent, init_chat_model, messages
+langchain-openai>=1                  # Azure OpenAI (primary) + OpenAI
+langchain-anthropic                  # Claude (fallback chat provider)
+
+# --- RAG stack ---
+langchain-chroma                     # Chroma vector store
+langchain-community                  # PyPDFLoader
+pypdf                                # PDF parsing backend
+langchain-text-splitters             # RecursiveCharacterTextSplitter
+
+# --- Tools, tracing, config, validation ---
+langchain-tavily                     # TavilySearch (Market Researcher)
+langsmith                            # tracing client
+python-dotenv                        # load .env into the environment
+pydantic>=2                          # v2 schemas for structured output
+
+# --- MCP server + client (Phase 6) ---
+mcp[cli]>=1.27,<2                    # pin <2: v2 renames FastMCP -> MCPServer
+
+# --- Fallback embeddings (LOCAL; only if EMBEDDINGS=huggingface) ---
+# Heavy (installs torch). Uncomment + reinstall only if you switch
+# EMBEDDINGS=huggingface because Azure embeddings are unavailable:
+# langchain-huggingface
+# sentence-transformers
