@@ -14,3 +14,4 @@ from langgraph.graph.message import add_messages
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
+    next: str  # the supervisor's routing decision: a worker name, or "FINISH"
