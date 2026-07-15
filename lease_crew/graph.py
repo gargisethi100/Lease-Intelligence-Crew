@@ -1,12 +1,15 @@
-"""Supervisor graph: routes each question to the right specialist worker(s)."""
+"""Supervisor graph: routes each question to a specialist. The Analyst writes
+Python and PAUSES for human approval (interrupt) before running it."""
 
+import builtins
 from typing import Literal
 
 from langchain_core.messages import AIMessage
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import interrupt
 from pydantic import BaseModel
 
-from lease_crew.agents import analyst, lease_expert, market_researcher
+from lease_crew.agents import lease_expert, market_researcher
 from lease_crew.config import get_chat_model
 from lease_crew.state import State
 
@@ -22,25 +25,34 @@ SUPERVISOR_PROMPT = (
     "Never route to a specialist that has already answered its part."
 )
 
+CODE_PROMPT = (
+    "Write a short Python snippet that computes the answer to the user's request "
+    "and assigns it to a variable named `answer`. Output ONLY the code — no "
+    "explanation, no markdown fences."
+)
+
+# Restricted builtins for exec: enough for rent math, nothing that touches the
+# system. The human approval is the primary guard; a real system also sandboxes.
+SAFE = {n: getattr(builtins, n) for n in (
+    "print range sum round min max abs len pow sorted enumerate zip "
+    "float int str list dict tuple bool".split()
+)}
+
 
 class Route(BaseModel):
-    """Who should act next, or FINISH when the question is answered."""
-
     next: Literal["lease_expert", "analyst", "market_researcher", "FINISH"]
 
 
 def supervisor(state: State) -> dict:
-    # Safety rail: bound coordination so a confused supervisor can't loop forever.
     worker_turns = sum(1 for m in state["messages"] if getattr(m, "name", None) in MEMBERS)
-    if worker_turns >= 3:
+    if worker_turns >= 3:  # safety rail: bound coordination
         return {"next": "FINISH"}
     messages = [{"role": "system", "content": SUPERVISOR_PROMPT}] + state["messages"]
-    decision = get_chat_model().with_structured_output(Route).invoke(messages)
-    return {"next": decision.next}
+    return {"next": get_chat_model().with_structured_output(Route).invoke(messages).next}
 
 
 def make_worker(factory, name: str):
-    agent = factory()  # build the scoped create_agent once
+    agent = factory()
 
     def node(state: State) -> dict:
         result = agent.invoke({"messages": state["messages"]})
@@ -49,19 +61,35 @@ def make_worker(factory, name: str):
     return node
 
 
-def build_graph():
+def analyst_node(state: State) -> dict:
+    code = get_chat_model().invoke(
+        [{"role": "system", "content": CODE_PROMPT}] + state["messages"]
+    ).content.strip().removeprefix("```python").removeprefix("```").removesuffix("```").strip()
+
+    decision = interrupt({"action": "run_python", "code": code})  # PAUSE for approval
+    if str(decision).strip().lower() not in {"yes", "y", "approve"}:
+        return {"messages": [AIMessage("Calculation not approved.", name="analyst")]}
+
+    scope = {"__builtins__": SAFE}
+    try:
+        exec(code, scope)
+        answer = scope.get("answer", "(the snippet set no `answer`)")
+    except Exception as exc:
+        answer = f"error running snippet: {exc}"
+    return {"messages": [AIMessage(f"Result: {answer}", name="analyst")]}
+
+
+def build_graph(checkpointer=None):
     builder = StateGraph(State)
     builder.add_node("supervisor", supervisor)
     builder.add_node("lease_expert", make_worker(lease_expert, "lease_expert"))
-    builder.add_node("analyst", make_worker(analyst, "analyst"))
     builder.add_node("market_researcher", make_worker(market_researcher, "market_researcher"))
+    builder.add_node("analyst", analyst_node)  # custom node so interrupt() propagates
 
     builder.add_edge(START, "supervisor")
     for member in MEMBERS:
-        builder.add_edge(member, "supervisor")  # each worker reports back
+        builder.add_edge(member, "supervisor")
     builder.add_conditional_edges(
-        "supervisor",
-        lambda state: state["next"],
-        {**{m: m for m in MEMBERS}, "FINISH": END},
+        "supervisor", lambda s: s["next"], {**{m: m for m in MEMBERS}, "FINISH": END}
     )
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
