@@ -1,6 +1,5 @@
 """Lease abstraction: extract key commercial terms into validated JSON.
-
-Mirrors a real Savills workflow. Uses structured output (a Pydantic schema),
+ Uses structured output (a Pydantic schema),
 so the model returns typed, validated data instead of free text.
 """
 
