@@ -32,6 +32,28 @@ def get_chat_model(temperature: float = 0.0):
             # and AZURE_OPENAI_API_KEY automatically.
         )
 
+    if provider == "bedrock":
+        from langchain_aws import ChatBedrockConverse
+
+        return ChatBedrockConverse(
+            # On-demand calls use a region-prefixed inference profile ID.
+            model=os.getenv(
+                "BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+            ),
+            region_name=os.getenv("AWS_REGION", "us-east-1"),
+            temperature=temperature,
+            # Auth: AWS_BEARER_TOKEN_BEDROCK (your Bedrock API key) read from env.
+        )
+
+    if provider == "gemini":
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        return ChatGoogleGenerativeAI(
+            model=os.getenv("GOOGLE_CHAT_MODEL", "gemini-flash-latest"),
+            temperature=temperature,
+            # api_key is read from GOOGLE_API_KEY automatically.
+        )
+
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
@@ -41,7 +63,10 @@ def get_chat_model(temperature: float = 0.0):
             # api_key is read from ANTHROPIC_API_KEY automatically.
         )
 
-    raise ValueError(f"Unknown PROVIDER={provider!r}; expected 'azure' or 'anthropic'.")
+    raise ValueError(
+        f"Unknown PROVIDER={provider!r}; "
+        "expected 'azure', 'bedrock', 'gemini', or 'anthropic'."
+    )
 
 
 def get_embeddings():
@@ -56,6 +81,14 @@ def get_embeddings():
             api_version=os.getenv("OPENAI_API_VERSION", "2024-10-21"),
         )
 
+    if provider == "gemini":
+        from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+        return GoogleGenerativeAIEmbeddings(
+            model=os.getenv("GOOGLE_EMBEDDING_MODEL", "models/gemini-embedding-001"),
+            # api_key is read from GOOGLE_API_KEY automatically.
+        )
+
     if provider == "huggingface":
         from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -66,5 +99,5 @@ def get_embeddings():
         )
 
     raise ValueError(
-        f"Unknown EMBEDDINGS={provider!r}; expected 'azure' or 'huggingface'."
+        f"Unknown EMBEDDINGS={provider!r}; expected 'azure', 'gemini', or 'huggingface'."
     )

@@ -10,8 +10,10 @@ langgraph-checkpoint-sqlite          # SqliteSaver for cross-restart memory
 
 # --- LangChain + provider integrations ---
 langchain>=1                         # create_agent, init_chat_model, messages
-langchain-openai>=1                  # Azure OpenAI (primary) + OpenAI
-langchain-anthropic                  # Claude (fallback chat provider)
+langchain-openai>=1                  # Azure OpenAI (interview target)
+langchain-google-genai               # Google Gemini (free chat + embeddings)
+langchain-anthropic                  # Claude (optional alternative)
+langchain-aws                        # AWS Bedrock (Claude Haiku via Bedrock)
 
 # --- RAG stack ---
 langchain-chroma                     # Chroma vector store
@@ -28,8 +30,8 @@ pydantic>=2                          # v2 schemas for structured output
 # --- MCP server + client (Phase 6) ---
 mcp[cli]>=1.27,<2                    # pin <2: v2 renames FastMCP -> MCPServer
 
-# --- Fallback embeddings (LOCAL; only if EMBEDDINGS=huggingface) ---
-# Heavy (installs torch). Uncomment + reinstall only if you switch
-# EMBEDDINGS=huggingface because Azure embeddings are unavailable:
+# --- Optional local embeddings (only if EMBEDDINGS=huggingface) ---
+# Heavy (installs torch). Uncomment + reinstall only if you want fully
+# offline embeddings instead of Gemini/Azure:
 # langchain-huggingface
 # sentence-transformers
