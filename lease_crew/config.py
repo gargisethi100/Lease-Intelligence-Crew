@@ -81,6 +81,15 @@ def get_embeddings():
             api_version=os.getenv("OPENAI_API_VERSION", "2024-10-21"),
         )
 
+    if provider == "bedrock":
+        from langchain_aws import BedrockEmbeddings
+
+        return BedrockEmbeddings(
+            model_id=os.getenv("BEDROCK_EMBEDDING_MODEL", "amazon.titan-embed-text-v2:0"),
+            region_name=os.getenv("AWS_REGION", "us-east-1"),
+            # Auth: AWS_BEARER_TOKEN_BEDROCK (same key as the chat model).
+        )
+
     if provider == "gemini":
         from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
@@ -99,5 +108,6 @@ def get_embeddings():
         )
 
     raise ValueError(
-        f"Unknown EMBEDDINGS={provider!r}; expected 'azure', 'gemini', or 'huggingface'."
+        f"Unknown EMBEDDINGS={provider!r}; "
+        "expected 'azure', 'bedrock', 'gemini', or 'huggingface'."
     )
