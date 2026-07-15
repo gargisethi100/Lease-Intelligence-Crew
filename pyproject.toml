@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lease-intelligence-crew"
+version = "0.1.0"
+description = "Multi-agent LangGraph system for commercial lease intelligence: RAG over lease documents, structured lease abstraction, Azure OpenAI, MCP server, and human-in-the-loop approval."
+requires-python = ">=3.11"
+# Runtime dependencies live in requirements.txt (our reproducible install
+# list). This file handles packaging only, so we leave deps empty here.
+dependencies = []
+
+[tool.setuptools]
+# List the package explicitly. With a flat layout, setuptools would
+# otherwise see scripts/, mcp_server/, data/ as top-level and refuse to guess.
+packages = ["lease_crew"]
